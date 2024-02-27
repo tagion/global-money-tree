@@ -15,10 +15,9 @@
             let newest_epoch = 0;
 
             sub.on('data', (msg) => {
-                const raw = msg.slice(9,msg.length);
+                const raw = msg.slice(20,msg.length);
+                console.log(msg);
                 const payload = JSON.parse(raw);
-                console.log(raw);
-
 
                 if (payload.$msg.params.task !== "Node_1_dart") {
                     return;
