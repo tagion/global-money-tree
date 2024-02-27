@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nanomsg-Browser Example</title>
+    
+    <script src="https://unpkg.com/nanomsg-browser/dist/nanomsg.js"></script>
+    <script>
+        ( function () {
+            const sub = new Socket({ protocol: Protocol.SUB });
+
+            sub.connect('ws://0.0.0.0:6969');
+
+            let newest_epoch = 0;
+
+            sub.on('data', (msg) => {
+                const raw = msg.slice(9,msg.length);
+                const payload = JSON.parse(raw);
+
+
+                if (payload.$msg.params.task !== "Node_1_dart") {
+                    return;
+                }
+                const messageContainer = document.getElementById('message-container');
+                messageContainer.innerHTML = `<p>${msg}</p>`;
+
+                // const bullseye = payload.$msg.params.data[0].$a.$eye[1];
+                const archives = payload.$msg.params.data;
+                Object.values(archives).forEach((data) => 
+                    { 
+                        const archive = data.$a;
+                        if (archive == undefined) {
+                            return;
+                        }
+                        const bullseye = archive?.$eye ? archive.$eye[1] : undefined;
+                        if (bullseye !== undefined && bullseye !== "@") {
+                            const current_bullseye = document.getElementById('current-bullseye');
+                            current_bullseye.innerHTML = `<h1> Current bullseye: ${bullseye}</h1>`;
+                        }
+
+                        const epoch = archive["#$epoch"];
+                        if (epoch == undefined) {
+                            return;
+                        }
+                        const received_epoch_number = Number(epoch[1]);
+                        if (received_epoch_number > newest_epoch) {
+                            newest_epoch = received_epoch_number;
+                            const current_epoch = document.getElementById('current-epoch');
+                            current_epoch.innerHTML = `<h1> Current epoch: ${newest_epoch}</h1>`;
+                        }
+
+                    }
+                );
+            });
+        })();
+    </script>
+</head>
+<body>
+    <h1>NNG-Explorer prototype</h1>
+    <div id="message-container"></div>
+    <div id="current-bullseye"></div>
+    <div id="current-epoch"></div>
+</body>
+</html>
